@@ -10,6 +10,8 @@ class DatabaseService {
 
   final List<Map<String, dynamic>> _webCastles = [];
   final List<Map<String, dynamic>> _webCheckIns = [];
+// 💡 請在類別內部最上方（約第 11 行附近）加上這行變數
+  bool isChugokuBadgeClaimed = false; // 記錄中國地區徽章是否已領取
 
   Future<dynamic> get database async {
     if (kIsWeb) {
@@ -32,10 +34,20 @@ class DatabaseService {
     ];
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    return await openDatabase(join(dbPath, filePath), version: 1, onCreate: _createDB);
-  }
+Future<Database> _initDB(String filePath) async {
+  final dbPath = await getDatabasesPath();
+  return await openDatabase(
+    join(dbPath, filePath), 
+    version: 2, // <-- 強制升級版本號，破壞舊快取
+    onCreate: _createDB,
+    onUpgrade: (db, oldVersion, newVersion) async {
+      // 如果版本更新，直接清空舊表重新觸發建立
+      await db.execute('DROP TABLE IF EXISTS castles');
+      await db.execute('DROP TABLE IF EXISTS check_ins');
+      await _createDB(db, newVersion);
+    },
+  );
+}
 
   Future _createDB(Database db, int version) async {
     await db.execute('CREATE TABLE castles(id TEXT PRIMARY KEY, nameKey TEXT, latitude REAL, longitude REAL, area TEXT)');

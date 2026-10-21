@@ -9,8 +9,9 @@ import 'views/notebook_view.dart';
 late List<CameraDescription> globalCameras;
 
 Future<void> databaseInsertWebOrMobile(String castleId, String photoPath) async {
+  final cleanId = castleId.trim(); // 確保無任何隱形換行或空格
   await DatabaseService.instance.insertCheckIn({
-    'castleId': castleId,
+    'castleId': cleanId,
     'checkInTime': DateTime.now().toString().split('.').first,
     'photoPath': photoPath,
   });
